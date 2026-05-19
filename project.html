@@ -1290,7 +1290,7 @@ function submitTest() {
                 <label class="mcq-option"><input type="radio" name="pq3" value="d"> Symmetric</label>
             </div>
  
-            <button class="submit-btn" onclick="submitTest('posttest')">
+            <button class="submit-btn" onclick="submitPostTest()">
                 <i class="fas fa-paper-plane"></i> Submit Posttest
             </button>
         </div>
@@ -1515,9 +1515,9 @@ function submitTest() {
         });
  
         // Submit handlers
-        function submitTest(type) {
-            alert('Your ' + (type === 'pretest' ? 'Pretest' : 'Posttest') + ' has been submitted successfully! Thank you.');
-        }
+       function submitPostTest() {
+    alert('Your Posttest has been submitted successfully! Thank you.');
+}
  
         function submitFeedback() {
             alert('Thank you for your feedback! It has been recorded.');
