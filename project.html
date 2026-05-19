@@ -832,24 +832,64 @@
                 </div>
             </div>
             <div class="page-content-box">
-                <h4>What is Rank of a Matrix?</h4>
-                <p>The <strong>rank</strong> of a matrix is the maximum number of linearly independent row vectors (or column vectors) in the matrix. It indicates the dimension of the vector space spanned by its rows or columns.</p>
+                <h4>What is Jacobian?</h4>
+               <h2>Introduction</h2>
+    <p>
+        The Jacobian is an important concept in multivariable calculus.
+        It is used to study transformations involving two or more variables.
+        The Jacobian helps in finding how variables change with respect to each other.
+    </p>
  
-                <h4 style="margin-top: 20px;">Row Echelon Form (REF)</h4>
-                <p>A matrix is in Row Echelon Form if:</p>
-                <ul style="margin-left: 20px; color: #555; line-height: 2;">
-                    <li>All zero rows are at the bottom.</li>
-                    <li>The leading entry of each non-zero row is to the right of the leading entry of the row above it.</li>
-                </ul>
- 
-                <h4 style="margin-top: 20px;">Rank-Nullity Theorem</h4>
-                <p>For an m × n matrix A: <strong>Rank(A) + Nullity(A) = n</strong>, where n is the number of columns.</p>
- 
-                <h4 style="margin-top: 20px;">Key Properties</h4>
-                <ul style="margin-left: 20px; color: #555; line-height: 2;">
-                    <li>Rank(A) = Rank(Aᵀ)</li>
-                    <li>Rank(A) ≤ min(m, n)</li>
-                    <li>A square matrix is invertible if and only if its rank equals its order.</li>
+                <h2>Definition</h2>
+    <p>
+        If u and v are functions of x and y:
+    </p>
+
+    <p>
+        u = f(x,y) <br>
+        v = g(x,y)
+    </p>
+
+    <p>
+        Then the Jacobian is:
+    </p>
+
+    <p>
+        J = ∂(u,v) / ∂(x,y)
+    </p>
+
+    <h2>Formula</h2>
+
+    <p>
+        J =
+        | ∂u/∂x   ∂u/∂y | <br>
+        | ∂v/∂x   ∂v/∂y |
+    </p>
+
+    <h2>Steps to Find Jacobian</h2>
+
+    <ul>
+        <li>Write the given functions.</li>
+        <li>Find partial derivatives.</li>
+        <li>Form the Jacobian matrix.</li>
+        <li>Calculate the determinant.</li>
+    </ul>
+
+    <h2>Applications</h2>
+
+    <ul>
+        <li>Coordinate transformation</li>
+        <li>Engineering mathematics</li>
+        <li>Machine learning</li>
+        <li>Robotics</li>
+    </ul>
+
+    <h2>Conclusion</h2>
+
+    <p>
+        The Jacobian is used to analyze variable transformations
+        and plays an important role in mathematics and engineering.
+    </p>
                 </ul>
             </div>
         </div>
