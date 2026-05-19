@@ -1336,229 +1336,190 @@ Score: <span id="score">0</span>
 
 </div>
 
-<script>
+<<script>
 
-let score = 0;
+let gameScore = 0;
+let totalVars = 0;
+let variableArray = [];
+let parsedFunctions = [];
+let computedJacobian = [];
 
-let n;
-let variables = [];
-let functions = [];
-let jacobianMatrix = [];
+let currentStep = "functions";
+let currentI = 0;
+let currentJ = 0;
+let currentChances = 3;
 
-function print(msg){
-    document.getElementById("output").innerHTML += msg + "\n";
+function updateLog(message) {
+
+    const logBox = document.getElementById("log-text");
+
+    logBox.innerHTML += message + "<br>";
+
+    logBox.scrollTop = logBox.scrollHeight;
 }
 
-function updateScore(points){
-    score += points;
-    document.getElementById("score").innerText = score;
+function updateScore(points) {
+
+    gameScore += points;
+
+    document.getElementById("current-score").innerText = gameScore;
 }
 
-function startProgram(){
+function startVisualSimulation() {
 
-    document.getElementById("output").innerHTML = "";
+    totalVars = parseInt(document.getElementById("matrix-n").value);
 
-    n = parseInt(document.getElementById("n").value);
+    variableArray =
+        document.getElementById("matrix-vars")
+        .value
+        .trim()
+        .split(/\s+/);
 
-    variables = document.getElementById("variables")
-    .value
-    .trim()
-    .split(" ");
+    if(variableArray.length !== totalVars){
 
-    if(variables.length !== n){
         alert("Variable count mismatch!");
+
         return;
     }
 
-    score = 0;
+    gameScore = 0;
+
+    parsedFunctions = [];
+
+    computedJacobian = [];
+
+    currentI = 0;
+    currentJ = 0;
+    currentChances = 3;
+
+    currentStep = "functions";
+
+    document.getElementById("setup-panel").style.display = "none";
+
+    document.getElementById("game-panel").style.display = "block";
+
+    document.getElementById("log-text").innerHTML = "";
+
     updateScore(0);
 
-    functions = [];
-    jacobianMatrix = [];
+    document.getElementById("submit-game-btn").onclick =
+        handleGameSubmit;
 
-    let html = "";
+    document.getElementById("game-instructions").innerText =
+        "Enter function f1";
 
-    for(let i=0;i<n;i++){
-
-        html += `
-        <label>Enter function f${i+1}</label>
-        <input type="text" id="func${i}">
-        `;
-    }
-
-    html += `
-    <button onclick="processFunctions()">
-    Submit Functions
-    </button>
-    `;
-
-    document.getElementById("simulationArea").innerHTML = html;
-
-    print("=== RULES ===");
-    print("Correct derivative = +5");
-    print("Correct matrix row = +10");
-    print("Wrong attempt = -1");
-    print("Hint used = -2");
+    updateLog("Enter function f1");
 }
 
-function processFunctions(){
+function handleGameSubmit(){
 
-    functions = [];
+    let input =
+        document.getElementById("user-game-input")
+        .value
+        .trim();
 
-    for(let i=0;i<n;i++){
+    if(input === "") return;
 
-        let f = document.getElementById(`func${i}`).value;
+    document.getElementById("user-game-input").value = "";
 
-        functions.push(f);
+    // FUNCTIONS INPUT
 
-        print(`f${i+1} = ${f}`);
-    }
+    if(currentStep === "functions"){
 
-    startDerivativeQuiz();
-}
+        try{
 
-function startDerivativeQuiz(){
+            parsedFunctions.push(input);
 
-    let html = "";
+            updateLog("Function f" + (currentI + 1) + " = " + input);
 
-    for(let i=0;i<n;i++){
+            currentI++;
 
-        for(let j=0;j<n;j++){
+            if(currentI < totalVars){
 
-            html += `
-            <label>
-            Find ∂f${i+1}/∂${variables[j]}
-            </label>
+                document.getElementById("game-instructions").innerText =
+                    "Enter function f" + (currentI + 1);
 
-            <input type="text"
-            id="d_${i}_${j}">
-            `;
-        }
-    }
+            } else {
 
-    html += `
-    <button onclick="checkDerivatives()">
-    Verify Derivatives
-    </button>
-    `;
+                currentStep = "derivatives";
 
-    document.getElementById("simulationArea").innerHTML = html;
-}
+                currentI = 0;
+                currentJ = 0;
 
-function checkDerivatives(){
-
-    jacobianMatrix = [];
-
-    for(let i=0;i<n;i++){
-
-        let row = [];
-
-        for(let j=0;j<n;j++){
-
-            let derivative =
-            math.derivative(
-                functions[i],
-                variables[j]
-            ).toString();
-
-            let userAnswer =
-            document.getElementById(`d_${i}_${j}`)
-            .value;
-
-            try{
-
-                let diff =
-                math.simplify(
-                    `(${userAnswer}) - (${derivative})`
-                ).toString();
-
-                if(diff === "0"){
-
-                    print(`Correct ∂f${i+1}/∂${variables[j]}`);
-
-                    updateScore(5);
-
-                }else{
-
-                    print(`Wrong ∂f${i+1}/∂${variables[j]}`);
-
-                    print(`Hint: ${derivative}`);
-
-                    updateScore(-3);
-                }
-
-            }catch{
-
-                print("Invalid expression");
-
-                updateScore(-1);
+                setupDerivativeStep();
             }
 
-            row.push(derivative);
+        } catch(error){
+
+            alert("Invalid function");
         }
-
-        jacobianMatrix.push(row);
     }
 
-    showMatrixStep();
-}
+    // DERIVATIVES
 
-function showMatrixStep(){
+    else if(currentStep === "derivatives"){
 
-    let html = "";
+        let func = parsedFunctions[currentI];
 
-    for(let i=0;i<n;i++){
+        let variable = variableArray[currentJ];
 
-        html += `
-        <label>
-        Enter row ${i+1} of Jacobian Matrix
-        (space separated)
-        </label>
+        let actualDerivative =
+            math.derivative(func, variable).toString();
 
-        <input type="text"
-        id="row_${i}">
-        `;
+        try{
+
+            let difference =
+                math.simplify(
+                    "(" + input + ") - (" + actualDerivative + ")"
+                );
+
+            if(difference.toString() === "0"){
+
+                updateLog("Correct derivative!");
+
+                updateScore(5);
+
+                moveToNextDerivative(actualDerivative);
+
+            } else {
+
+                handleWrongAttempt(actualDerivative);
+            }
+
+        } catch(error){
+
+            alert("Invalid derivative");
+        }
     }
 
-    html += `
-    <button onclick="checkRows()">
-    Verify Matrix
-    </button>
-    `;
+    // MATRIX ROWS
 
-    document.getElementById("simulationArea").innerHTML = html;
-}
+    else if(currentStep === "rows"){
 
-function checkRows(){
+        let userRow = input.split(/\s+/);
 
-    for(let i=0;i<n;i++){
-
-        let userRow =
-        document.getElementById(`row_${i}`)
-        .value
-        .trim()
-        .split(" ");
-
-        let correctRow = jacobianMatrix[i];
+        let correctRow = computedJacobian[currentI];
 
         let correct = true;
 
-        if(userRow.length !== n){
+        if(userRow.length !== totalVars){
 
             correct = false;
+        }
 
-        }else{
+        else{
 
-            for(let j=0;j<n;j++){
+            for(let j = 0; j < totalVars; j++){
 
                 let diff =
-                math.simplify(
-                    `(${userRow[j]}) - (${correctRow[j]})`
-                ).toString();
+                    math.simplify(
+                        "(" + userRow[j] + ") - (" + correctRow[j] + ")"
+                    );
 
-                if(diff !== "0"){
+                if(diff.toString() !== "0"){
 
                     correct = false;
+
                     break;
                 }
             }
@@ -1566,132 +1527,165 @@ function checkRows(){
 
         if(correct){
 
-            print(`Correct Row ${i+1}`);
+            updateLog("Correct matrix row!");
 
             updateScore(10);
 
-        }else{
+            currentI++;
 
-            print(`Wrong Row ${i+1}`);
+            if(currentI < totalVars){
 
-            print(`Hint: ${correctRow.join(" ")}`);
+                currentChances = 3;
 
-            updateScore(-3);
+                document.getElementById("game-instructions").innerText =
+                    "Enter row " + (currentI + 1);
+
+            } else {
+
+                showFinalMatrix();
+            }
+
+        } else {
+
+            handleWrongRowAttempt(correctRow.join(" "));
         }
     }
-
-    displayFinalMatrix();
 }
 
-function displayFinalMatrix(){
+function setupDerivativeStep(){
 
-    print("\n=== JACOBIAN MATRIX ===");
+    currentChances = 3;
 
-    console.table(jacobianMatrix);
-
-    let determinant;
-
-    try{
-
-        determinant = math.det(jacobianMatrix);
-
-    }catch{
-
-        determinant = "Cannot calculate determinant";
-    }
-
-    print("\n=== DETERMINANT ===");
-
-    print(determinant);
-
-    let html = `
-    <button onclick="substituteValues()">
-    Substitute Values
-    </button>
-    `;
-
-    document.getElementById("simulationArea").innerHTML = html;
-
-    finalResult();
+    document.getElementById("game-instructions").innerText =
+        "Find derivative ∂f" +
+        (currentI + 1) +
+        "/∂" +
+        variableArray[currentJ];
 }
 
-function substituteValues(){
+function moveToNextDerivative(derivative){
 
-    let scope = {};
+    if(!computedJacobian[currentI]){
 
-    for(let i=0;i<n;i++){
-
-        let val =
-        prompt(`Enter value for ${variables[i]}`);
-
-        scope[variables[i]] = parseFloat(val);
+        computedJacobian[currentI] = [];
     }
 
-    let substituted = [];
+    computedJacobian[currentI].push(derivative);
 
-    for(let i=0;i<n;i++){
+    currentJ++;
 
-        let row = [];
+    if(currentJ >= totalVars){
 
-        for(let j=0;j<n;j++){
+        currentJ = 0;
 
-            row.push(
-                math.evaluate(
-                    jacobianMatrix[i][j],
-                    scope
-                )
-            );
+        currentI++;
+    }
+
+    if(currentI < totalVars){
+
+        setupDerivativeStep();
+
+    } else {
+
+        currentStep = "rows";
+
+        currentI = 0;
+
+        document.getElementById("game-instructions").innerText =
+            "Enter matrix row 1";
+    }
+}
+
+function handleWrongAttempt(correctAnswer){
+
+    currentChances--;
+
+    updateScore(-1);
+
+    if(currentChances > 0){
+
+        updateLog(
+            "Wrong answer. Remaining chances: " +
+            currentChances
+        );
+
+    } else {
+
+        updateLog("Hint: " + correctAnswer);
+
+        updateScore(-2);
+
+        moveToNextDerivative(correctAnswer);
+    }
+}
+
+function handleWrongRowAttempt(correctRow){
+
+    currentChances--;
+
+    updateScore(-1);
+
+    if(currentChances > 0){
+
+        updateLog(
+            "Wrong row. Remaining chances: " +
+            currentChances
+        );
+
+    } else {
+
+        updateLog("Hint row: " + correctRow);
+
+        updateScore(-2);
+
+        currentI++;
+
+        if(currentI < totalVars){
+
+            currentChances = 3;
+
+            document.getElementById("game-instructions").innerText =
+                "Enter row " + (currentI + 1);
+
+        } else {
+
+            showFinalMatrix();
+        }
+    }
+}
+
+function showFinalMatrix(){
+
+    let matrixHTML = "<h3>Jacobian Matrix</h3>";
+
+    matrixHTML += "<table border='1' cellpadding='10'>";
+
+    for(let i = 0; i < computedJacobian.length; i++){
+
+        matrixHTML += "<tr>";
+
+        for(let j = 0; j < computedJacobian[i].length; j++){
+
+            matrixHTML +=
+                "<td>" +
+                computedJacobian[i][j] +
+                "</td>";
         }
 
-        substituted.push(row);
+        matrixHTML += "</tr>";
     }
 
-    print("\n=== MATRIX AFTER SUBSTITUTION ===");
+    matrixHTML += "</table>";
 
-    print(JSON.stringify(substituted));
+    document.getElementById("log-text").innerHTML += matrixHTML;
 
-    try{
+    updateLog("Final Score = " + gameScore);
 
-        let det = math.det(substituted);
-
-        print("\nDeterminant After Substitution = " + det);
-
-        updateScore(10);
-
-    }catch{
-
-        print("Cannot calculate substituted determinant");
-    }
-
-    finalResult();
-}
-
-function finalResult(){
-
-    print("\n=== FINAL SCORE ===");
-
-    print("Your Score = " + score);
-
-    if(score >= 80){
-
-        print("Outstanding Performance!");
-
-    }else if(score >= 50){
-
-        print("Excellent Work!");
-
-    }else if(score >= 25){
-
-        print("Good Attempt!");
-
-    }else{
-
-        print("Keep Practicing!");
-    }
+    document.getElementById("game-instructions").innerText =
+        "Simulation Complete";
 }
 
 </script>
-
 </body>
 </html>
  
