@@ -1240,18 +1240,460 @@ function submitTest() {
                 <i class="fas fa-desktop"></i>
                 <div>
                     <h2>Simulation</h2>
-                    <p>Interactive matrix rank simulator</p>
-                </div>
-            </div>
-            <div class="sim-placeholder">
-                <i class="fas fa-cogs"></i>
-                <h3>Simulation Loading Area</h3>
-                <p>Your interactive simulation will appear here. Replace this block with your simulation iframe, canvas, or component.</p>
-                <p style="margin-top: 8px; font-size: 13px; background: #fff; padding: 10px 18px; border-radius: 6px; border: 1px solid #d1e7ff;">
-                    Example: <code>&lt;iframe src="simulation.html" width="100%" height="500px"&gt;&lt;/iframe&gt;</code>
-                </p>
-            </div>
-        </div>
+                    <p>Jacobian simulator</p>
+               <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Jacobian Determinant Simulator</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.0/math.js"></script>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h1{
+    text-align:center;
+    color:#0077cc;
+}
+
+input, button{
+    padding:10px;
+    margin:8px 0;
+    width:100%;
+    font-size:16px;
+}
+
+button{
+    background:#0077cc;
+    color:white;
+    border:none;
+    cursor:pointer;
+    border-radius:5px;
+}
+
+button:hover{
+    background:#005fa3;
+}
+
+#output{
+    margin-top:20px;
+    background:#111;
+    color:#0f0;
+    padding:15px;
+    border-radius:8px;
+    min-height:200px;
+    white-space:pre-line;
+}
+
+.score{
+    font-size:20px;
+    font-weight:bold;
+    color:green;
+    margin-bottom:15px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Jacobian Determinant Simulator</h1>
+
+<div class="score">
+Score: <span id="score">0</span>
+</div>
+
+<label>Number of Variables / Functions</label>
+<input type="number" id="n" value="2">
+
+<label>Variables (space separated)</label>
+<input type="text" id="variables" value="x y">
+
+<button onclick="startProgram()">Start Simulation</button>
+
+<div id="simulationArea"></div>
+
+<div id="output"></div>
+
+</div>
+
+<script>
+
+let score = 0;
+
+let n;
+let variables = [];
+let functions = [];
+let jacobianMatrix = [];
+
+function print(msg){
+    document.getElementById("output").innerHTML += msg + "\n";
+}
+
+function updateScore(points){
+    score += points;
+    document.getElementById("score").innerText = score;
+}
+
+function startProgram(){
+
+    document.getElementById("output").innerHTML = "";
+
+    n = parseInt(document.getElementById("n").value);
+
+    variables = document.getElementById("variables")
+    .value
+    .trim()
+    .split(" ");
+
+    if(variables.length !== n){
+        alert("Variable count mismatch!");
+        return;
+    }
+
+    score = 0;
+    updateScore(0);
+
+    functions = [];
+    jacobianMatrix = [];
+
+    let html = "";
+
+    for(let i=0;i<n;i++){
+
+        html += `
+        <label>Enter function f${i+1}</label>
+        <input type="text" id="func${i}">
+        `;
+    }
+
+    html += `
+    <button onclick="processFunctions()">
+    Submit Functions
+    </button>
+    `;
+
+    document.getElementById("simulationArea").innerHTML = html;
+
+    print("=== RULES ===");
+    print("Correct derivative = +5");
+    print("Correct matrix row = +10");
+    print("Wrong attempt = -1");
+    print("Hint used = -2");
+}
+
+function processFunctions(){
+
+    functions = [];
+
+    for(let i=0;i<n;i++){
+
+        let f = document.getElementById(`func${i}`).value;
+
+        functions.push(f);
+
+        print(`f${i+1} = ${f}`);
+    }
+
+    startDerivativeQuiz();
+}
+
+function startDerivativeQuiz(){
+
+    let html = "";
+
+    for(let i=0;i<n;i++){
+
+        for(let j=0;j<n;j++){
+
+            html += `
+            <label>
+            Find ∂f${i+1}/∂${variables[j]}
+            </label>
+
+            <input type="text"
+            id="d_${i}_${j}">
+            `;
+        }
+    }
+
+    html += `
+    <button onclick="checkDerivatives()">
+    Verify Derivatives
+    </button>
+    `;
+
+    document.getElementById("simulationArea").innerHTML = html;
+}
+
+function checkDerivatives(){
+
+    jacobianMatrix = [];
+
+    for(let i=0;i<n;i++){
+
+        let row = [];
+
+        for(let j=0;j<n;j++){
+
+            let derivative =
+            math.derivative(
+                functions[i],
+                variables[j]
+            ).toString();
+
+            let userAnswer =
+            document.getElementById(`d_${i}_${j}`)
+            .value;
+
+            try{
+
+                let diff =
+                math.simplify(
+                    `(${userAnswer}) - (${derivative})`
+                ).toString();
+
+                if(diff === "0"){
+
+                    print(`Correct ∂f${i+1}/∂${variables[j]}`);
+
+                    updateScore(5);
+
+                }else{
+
+                    print(`Wrong ∂f${i+1}/∂${variables[j]}`);
+
+                    print(`Hint: ${derivative}`);
+
+                    updateScore(-3);
+                }
+
+            }catch{
+
+                print("Invalid expression");
+
+                updateScore(-1);
+            }
+
+            row.push(derivative);
+        }
+
+        jacobianMatrix.push(row);
+    }
+
+    showMatrixStep();
+}
+
+function showMatrixStep(){
+
+    let html = "";
+
+    for(let i=0;i<n;i++){
+
+        html += `
+        <label>
+        Enter row ${i+1} of Jacobian Matrix
+        (space separated)
+        </label>
+
+        <input type="text"
+        id="row_${i}">
+        `;
+    }
+
+    html += `
+    <button onclick="checkRows()">
+    Verify Matrix
+    </button>
+    `;
+
+    document.getElementById("simulationArea").innerHTML = html;
+}
+
+function checkRows(){
+
+    for(let i=0;i<n;i++){
+
+        let userRow =
+        document.getElementById(`row_${i}`)
+        .value
+        .trim()
+        .split(" ");
+
+        let correctRow = jacobianMatrix[i];
+
+        let correct = true;
+
+        if(userRow.length !== n){
+
+            correct = false;
+
+        }else{
+
+            for(let j=0;j<n;j++){
+
+                let diff =
+                math.simplify(
+                    `(${userRow[j]}) - (${correctRow[j]})`
+                ).toString();
+
+                if(diff !== "0"){
+
+                    correct = false;
+                    break;
+                }
+            }
+        }
+
+        if(correct){
+
+            print(`Correct Row ${i+1}`);
+
+            updateScore(10);
+
+        }else{
+
+            print(`Wrong Row ${i+1}`);
+
+            print(`Hint: ${correctRow.join(" ")}`);
+
+            updateScore(-3);
+        }
+    }
+
+    displayFinalMatrix();
+}
+
+function displayFinalMatrix(){
+
+    print("\n=== JACOBIAN MATRIX ===");
+
+    console.table(jacobianMatrix);
+
+    let determinant;
+
+    try{
+
+        determinant = math.det(jacobianMatrix);
+
+    }catch{
+
+        determinant = "Cannot calculate determinant";
+    }
+
+    print("\n=== DETERMINANT ===");
+
+    print(determinant);
+
+    let html = `
+    <button onclick="substituteValues()">
+    Substitute Values
+    </button>
+    `;
+
+    document.getElementById("simulationArea").innerHTML = html;
+
+    finalResult();
+}
+
+function substituteValues(){
+
+    let scope = {};
+
+    for(let i=0;i<n;i++){
+
+        let val =
+        prompt(`Enter value for ${variables[i]}`);
+
+        scope[variables[i]] = parseFloat(val);
+    }
+
+    let substituted = [];
+
+    for(let i=0;i<n;i++){
+
+        let row = [];
+
+        for(let j=0;j<n;j++){
+
+            row.push(
+                math.evaluate(
+                    jacobianMatrix[i][j],
+                    scope
+                )
+            );
+        }
+
+        substituted.push(row);
+    }
+
+    print("\n=== MATRIX AFTER SUBSTITUTION ===");
+
+    print(JSON.stringify(substituted));
+
+    try{
+
+        let det = math.det(substituted);
+
+        print("\nDeterminant After Substitution = " + det);
+
+        updateScore(10);
+
+    }catch{
+
+        print("Cannot calculate substituted determinant");
+    }
+
+    finalResult();
+}
+
+function finalResult(){
+
+    print("\n=== FINAL SCORE ===");
+
+    print("Your Score = " + score);
+
+    if(score >= 80){
+
+        print("Outstanding Performance!");
+
+    }else if(score >= 50){
+
+        print("Excellent Work!");
+
+    }else if(score >= 25){
+
+        print("Good Attempt!");
+
+    }else{
+
+        print("Keep Practicing!");
+    }
+}
+
+</script>
+
+</body>
+</html>
  
         <!-- 5. POSTTEST PAGE -->
         <div id="page-posttest" class="content card-page">
