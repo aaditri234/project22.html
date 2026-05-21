@@ -1029,7 +1029,15 @@ function submitTest(){
 
 /* ================= SIMULATION ================= */
 
-let totalVars = 0;
+
+        currentStep = "rows";
+
+        currentI = 0;
+
+        document.getElementById(
+        "game-instructions"
+        ).innerText =
+        "Enter Row 1";let totalVars = 0;
 let variableArray = [];
 let parsedFunctions = [];
 let computedJacobian = [];
@@ -1398,14 +1406,6 @@ function moveToNextDerivative(derivativeValue){
 
     }else{
 
-        currentStep = "rows";
-
-        currentI = 0;
-
-        document.getElementById(
-        "game-instructions"
-        ).innerText =
-        "Enter Row 1";
     }
 }
 
