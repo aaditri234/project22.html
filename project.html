@@ -1029,26 +1029,25 @@ function submitTest(){
 
 /* ================= SIMULATION ================= */
 
+let totalVars = 0;
 
-        currentStep = "rows";
-
-        currentI = 0;
-
-        document.getElementById(
-        "game-instructions"
-        ).innerText =
-        "Enter Row 1";let totalVars = 0;
 let variableArray = [];
+
 let parsedFunctions = [];
+
 let computedJacobian = [];
 
 let currentStep = "functions";
 
 let currentI = 0;
+
 let currentJ = 0;
 
 let chances = 3;
+
 let score = 0;
+
+
 
 function updateScoreDisplay(){
 
@@ -1056,6 +1055,12 @@ function updateScoreDisplay(){
     "score-display"
     ).innerText = score;
 }
+
+
+
+/* ===== LOG ===== */
+
+
 
 function updateLog(message){
 
@@ -1071,6 +1076,33 @@ function updateLog(message){
     logBox.scrollHeight;
 }
 
+
+
+/* ===== FORMAT EXPRESSIONS ===== */
+
+
+
+function formatExpression(expr){
+
+    expr = expr.replace(
+    /(\d)([a-zA-Z])/g,
+    "$1*$2"
+    );
+
+    expr = expr.replace(
+    /([a-zA-Z])(\d)/g,
+    "$1*$2"
+    );
+
+    return expr;
+}
+
+
+
+/* ===== MATRIX VISUAL ===== */
+
+
+
 function renderVisualMatrixSkeleton(){
 
     const grid =
@@ -1080,6 +1112,8 @@ function renderVisualMatrixSkeleton(){
 
     grid.innerHTML = "";
 
+
+
     for(let i=0;i<totalVars;i++){
 
         let row =
@@ -1087,6 +1121,8 @@ function renderVisualMatrixSkeleton(){
 
         row.className =
         "matrix-row-layout";
+
+
 
         for(let j=0;j<totalVars;j++){
 
@@ -1096,180 +1132,340 @@ function renderVisualMatrixSkeleton(){
             cell.className =
             "matrix-cell";
 
+
+
             if(
             computedJacobian[i] &&
             computedJacobian[i][j]
             ){
 
                 cell.innerText =
+
                 computedJacobian[i][j]
                 .toString();
 
                 cell.classList.add(
                 "filled"
                 );
+            }
 
-            }else{
+            else{
 
                 cell.innerText =
                 `∂f${i+1}/∂${variableArray[j]}`;
             }
 
+
+
             row.appendChild(cell);
         }
+
+
 
         grid.appendChild(row);
     }
 }
 
+
+
+/* ===== START SIMULATION ===== */
+
+
+
 function startVisualSimulation(){
 
     totalVars =
+
     parseInt(
+
     document.getElementById(
     "matrix-n"
     ).value
     );
 
+
+
     variableArray =
+
     document.getElementById(
     "matrix-vars"
     ).value.trim().split(/\s+/);
 
+
+
+    if(
+    variableArray.length !== totalVars
+    ){
+
+        alert(
+        "Enter variables SPACE SEPARATED"
+        );
+
+        return;
+    }
+
+
+
     parsedFunctions = [];
+
     computedJacobian = [];
 
+
+
     currentI = 0;
+
     currentJ = 0;
 
+
+
     score = 0;
+
     chances = 3;
+
+
 
     currentStep = "functions";
 
+
+
     updateScoreDisplay();
+
+
 
     document.getElementById(
     "game-panel"
     ).style.display = "block";
 
+
+
     document.getElementById(
     "log-text"
     ).innerHTML = "";
 
+
+
     updateLog("=== RULES ===");
+
     updateLog("Correct derivative = +5");
+
     updateLog("Correct row = +10");
-    updateLog("Wrong attempt = -1");
+
+    updateLog("Wrong answer = -1");
+
     updateLog("3 chances available");
 
+
+
+    updateLog(
+    "Use * for multiplication"
+    );
+
+    updateLog(
+    "Examples: x*y , 2*z , x+y"
+    );
+
+
+
     renderVisualMatrixSkeleton();
+
+
 
     document.getElementById(
     "submit-game-btn"
     ).onclick = handleGameSubmit;
 
+
+
     document.getElementById(
     "game-instructions"
     ).innerText =
+
     "Enter function f1";
 }
+
+
+
+/* ===== HANDLE INPUT ===== */
+
+
 
 function handleGameSubmit(){
 
     let value =
+
     document.getElementById(
     "user-game-input"
     ).value.trim();
 
-    if(!value) return;
+
+
+    value =
+    formatExpression(value);
+
+
+
+    if(!value){
+
+        return;
+    }
+
+
 
     document.getElementById(
     "user-game-input"
     ).value = "";
 
+
+
     /* ===== FUNCTIONS ===== */
+
+
 
     if(currentStep === "functions"){
 
-        parsedFunctions.push(
-        math.parse(value)
-        );
+        try{
 
-        updateLog(
-        `f${currentI+1} = ${value}`
-        );
+            parsedFunctions.push(
+            math.parse(value)
+            );
 
-        currentI++;
 
-        if(currentI < totalVars){
 
-            document.getElementById(
-            "game-instructions"
-            ).innerText =
-            `Enter function f${currentI+1}`;
+            updateLog(
+            `f${currentI+1} = ${value}`
+            );
 
-        }else{
 
-            currentStep = "derivatives";
 
-            currentI = 0;
-            currentJ = 0;
+            currentI++;
 
-            setupDerivativeStep();
+
+
+            if(currentI < totalVars){
+
+                document.getElementById(
+                "game-instructions"
+                ).innerText =
+
+                `Enter function f${currentI+1}`;
+            }
+
+            else{
+
+                currentStep =
+                "derivatives";
+
+                currentI = 0;
+
+                currentJ = 0;
+
+                setupDerivativeStep();
+            }
+
+        }
+
+        catch(error){
+
+            alert(
+            "Invalid function"
+            );
         }
     }
 
+
+
     /* ===== DERIVATIVES ===== */
 
-    else if(currentStep === "derivatives"){
 
-        let actualDerivative =
-        math.derivative(
-        parsedFunctions[currentI],
-        variableArray[currentJ]
-        );
+
+    else if(
+    currentStep === "derivatives"
+    ){
 
         try{
 
-            let diff =
+            let actualDerivative =
+
             math.simplify(
-            `(${value})-(${actualDerivative.toString()})`
+
+            math.derivative(
+
+            parsedFunctions[currentI],
+
+            variableArray[currentJ]
+
+            )
+
             );
+
+
+
+            let diff =
+
+            math.simplify(
+
+            "(" + value + ") - (" +
+
+            actualDerivative.toString()
+
+            + ")"
+
+            );
+
+
 
             if(diff.toString() === "0"){
 
                 updateLog(
+
                 `Correct ∂f${currentI+1}/∂${variableArray[currentJ]}`
+
                 );
+
+
 
                 score += 5;
 
                 updateScoreDisplay();
 
+
+
                 chances = 3;
+
+
 
                 moveToNextDerivative(
                 actualDerivative
                 );
+            }
 
-            }else{
+            else{
 
                 chances--;
 
                 score--;
 
+
+
                 updateScoreDisplay();
 
+
+
                 updateLog(
-                `Wrong answer | Chances Left = ${chances}`
+
+                `Wrong Answer | Chances Left = ${chances}`
                 );
+
+
 
                 if(chances === 0){
 
                     updateLog(
-                    `Hint: ${actualDerivative.toString()}`
+
+                    `Correct Answer = ${actualDerivative.toString()}`
                     );
+
+
 
                     moveToNextDerivative(
                     actualDerivative
@@ -1279,36 +1475,83 @@ function handleGameSubmit(){
                 }
             }
 
-        }catch(error){
+        }
 
-            alert("Invalid derivative");
+        catch(error){
+
+            alert(
+            "Invalid derivative"
+            );
         }
     }
 
+
+
     /* ===== ROWS ===== */
+
+
 
     else if(currentStep === "rows"){
 
         let userRow =
         value.split(/\s+/);
 
+
+
+        if(
+        userRow.length !== totalVars
+        ){
+
+            alert(
+            "Enter row SPACE SEPARATED"
+            );
+
+            return;
+        }
+
+
+
         let correctRow =
         computedJacobian[currentI];
 
+
+
         let valid = true;
 
-        for(let j=0;j<totalVars;j++){
 
-            let diff =
-            math.simplify(
-            `(${userRow[j]})-(${correctRow[j].toString()})`
-            );
 
-            if(diff.toString() !== "0"){
+        try{
 
-                valid = false;
+            for(let j=0;j<totalVars;j++){
+
+                let diff =
+
+                math.simplify(
+
+                "(" + userRow[j] + ") - (" +
+
+                correctRow[j].toString()
+
+                + ")"
+
+                );
+
+
+
+                if(diff.toString() !== "0"){
+
+                    valid = false;
+                }
             }
+
         }
+
+        catch(error){
+
+            valid = false;
+        }
+
+
 
         if(valid){
 
@@ -1316,54 +1559,94 @@ function handleGameSubmit(){
             `Correct Row ${currentI+1}`
             );
 
+
+
             score += 10;
 
             updateScoreDisplay();
 
+
+
+            chances = 3;
+
+
+
             currentI++;
+
+
 
             if(currentI < totalVars){
 
                 document.getElementById(
                 "game-instructions"
                 ).innerText =
-                `Enter Row ${currentI+1}`;
 
-            }else{
+                `Enter Row ${currentI+1} (space separated)`;
+            }
+
+            else{
 
                 showFinalMatrix();
             }
+        }
 
-        }else{
+        else{
 
             chances--;
 
             score--;
 
+
+
             updateScoreDisplay();
 
+
+
             updateLog(
+
             `Wrong Row | Chances Left = ${chances}`
             );
 
+
+
             if(chances === 0){
 
+                let answer = "";
+
+
+
+                for(let j=0;j<totalVars;j++){
+
+                    answer +=
+
+                    correctRow[j]
+                    .toString() + " ";
+                }
+
+
+
                 updateLog(
-                `Hint: ${correctRow.join(" ")}`
+                `Correct Row = ${answer}`
                 );
+
+
 
                 currentI++;
 
                 chances = 3;
+
+
 
                 if(currentI < totalVars){
 
                     document.getElementById(
                     "game-instructions"
                     ).innerText =
-                    `Enter Row ${currentI+1}`;
 
-                }else{
+                    `Enter Row ${currentI+1} (space separated)`;
+                }
+
+                else{
 
                     showFinalMatrix();
                 }
@@ -1372,71 +1655,289 @@ function handleGameSubmit(){
     }
 }
 
+
+
+/* ===== DERIVATIVE STEP ===== */
+
+
+
 function setupDerivativeStep(){
 
     document.getElementById(
     "game-instructions"
     ).innerText =
+
     `Find ∂f${currentI+1}/∂${variableArray[currentJ]}`;
 }
 
+
+
+/* ===== NEXT DERIVATIVE ===== */
+
+
+
 function moveToNextDerivative(derivativeValue){
 
-    if(!computedJacobian[currentI]){
+    if(
+    !computedJacobian[currentI]
+    ){
 
         computedJacobian[currentI] = [];
     }
 
+
+
     computedJacobian[currentI]
     .push(derivativeValue);
 
+
+
     renderVisualMatrixSkeleton();
 
+
+
     currentJ++;
+
+
 
     if(currentJ >= totalVars){
 
         currentJ = 0;
+
         currentI++;
     }
+
+
 
     if(currentI < totalVars){
 
         setupDerivativeStep();
+    }
 
-    }else{
+    else{
 
+        currentStep = "rows";
+
+        currentI = 0;
+
+        chances = 3;
+
+
+
+        updateLog(
+        "\n=== DERIVATIVES COMPLETED ==="
+        );
+
+
+
+        updateLog(
+        "Enter Jacobian rows SPACE SEPARATED"
+        );
+
+
+
+        document.getElementById(
+        "game-instructions"
+        ).innerText =
+
+        "Enter Row 1 (space separated)";
     }
 }
 
+
+
+/* ===== FINAL MATRIX ===== */
+
+
+
 function showFinalMatrix(){
 
-    updateLog("\n=== FINAL JACOBIAN MATRIX ===");
+    updateLog(
+    "\n=== FINAL JACOBIAN MATRIX ==="
+    );
 
-    for(let i=0;i<totalVars;i++){
+
+
+    let matrix = [];
+
+
+
+    /* ===== DISPLAY MATRIX ===== */
+
+
+
+    for(let r=0; r<totalVars; r++){
 
         let rowText = "";
 
-        for(let j=0;j<totalVars;j++){
+        let row = [];
 
-            rowText +=
-            computedJacobian[i][j]
-            .toString() + " ";
+
+
+        for(let c=0; c<totalVars; c++){
+
+            let val =
+
+            math.simplify(
+            computedJacobian[r][c]
+            ).toString();
+
+
+
+            row.push(val);
+
+            rowText += val + " ";
         }
+
+
+
+        matrix.push(row);
 
         updateLog(rowText);
     }
 
+
+
+    /* ===== DETERMINANT ===== */
+
+
+
+    try{
+
+        let determinant = "";
+
+
+
+        /* ===== 1x1 ===== */
+
+
+
+        if(totalVars === 1){
+
+            determinant =
+            matrix[0][0];
+        }
+
+
+
+        /* ===== 2x2 ===== */
+
+
+
+        else if(totalVars === 2){
+
+            let a = "(" + matrix[0][0] + ")";
+            let b = "(" + matrix[0][1] + ")";
+            let c = "(" + matrix[1][0] + ")";
+            let d = "(" + matrix[1][1] + ")";
+
+
+
+            determinant =
+
+            math.simplify(
+
+            "(" + a + "*" + d + ")" +
+
+            "-"
+
+            +
+
+            "(" + b + "*" + c + ")"
+
+            ).toString();
+        }
+
+
+
+        /* ===== 3x3 ===== */
+
+
+
+        else if(totalVars === 3){
+
+            let a = "(" + matrix[0][0] + ")";
+            let b = "(" + matrix[0][1] + ")";
+            let c = "(" + matrix[0][2] + ")";
+
+            let d = "(" + matrix[1][0] + ")";
+            let e = "(" + matrix[1][1] + ")";
+            let f = "(" + matrix[1][2] + ")";
+
+            let g = "(" + matrix[2][0] + ")";
+            let h = "(" + matrix[2][1] + ")";
+            let i = "(" + matrix[2][2] + ")";
+
+
+
+            let expr =
+
+            "(" + a + "*((" + e + "*" + i + ")-(" + f + "*" + h + ")))"
+
+            +
+
+            "-"
+
+            +
+
+            "(" + b + "*((" + d + "*" + i + ")-(" + f + "*" + g + ")))"
+
+            +
+
+            "+"
+
+            +
+
+            "(" + c + "*((" + d + "*" + h + ")-(" + e + "*" + g + ")))";
+
+
+
+            determinant =
+
+            math.simplify(expr)
+            .toString();
+        }
+
+
+
+        else{
+
+            determinant =
+            "Supported only up to 3x3";
+        }
+
+
+
+        updateLog(
+        "\nDETERMINANT = " +
+        determinant
+        );
+
+    }
+
+    catch(error){
+
+        updateLog(
+        "\nDeterminant calculation error"
+        );
+
+        console.log(error);
+    }
+
+
+
     updateLog(
-    `\nFINAL SCORE = ${score}`
+    "\nFINAL SCORE = " + score
     );
+
+
 
     document.getElementById(
     "game-instructions"
     ).innerText =
+
     "Simulation Completed";
 }
-
 /* ================= FEEDBACK ================= */
 
 function submitFeedback(){
