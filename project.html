@@ -1049,6 +1049,53 @@ let score = 0;
 
 
 
+/* ===== AUTO VARIABLES ===== */
+
+
+
+document.getElementById(
+"matrix-n"
+).addEventListener("change", function(){
+
+    let n = parseInt(this.value);
+
+    let vars = "";
+
+
+
+    if(n === 1){
+
+        vars = "x";
+    }
+
+    else if(n === 2){
+
+        vars = "x y";
+    }
+
+    else if(n === 3){
+
+        vars = "x y z";
+    }
+
+    else if(n === 4){
+
+        vars = "w x y z";
+    }
+
+
+
+    document.getElementById(
+    "matrix-vars"
+    ).value = vars;
+});
+
+
+
+/* ===== SCORE ===== */
+
+
+
 function updateScoreDisplay(){
 
     document.getElementById(
@@ -1190,19 +1237,6 @@ function startVisualSimulation(){
     document.getElementById(
     "matrix-vars"
     ).value.trim().split(/\s+/);
-
-
-
-    if(
-    variableArray.length !== totalVars
-    ){
-
-        alert(
-        "Enter variables SPACE SEPARATED"
-        );
-
-        return;
-    }
 
 
 
@@ -1762,10 +1796,6 @@ function showFinalMatrix(){
 
 
 
-    /* ===== DISPLAY MATRIX ===== */
-
-
-
     for(let r=0; r<totalVars; r++){
 
         let rowText = "";
@@ -1798,17 +1828,9 @@ function showFinalMatrix(){
 
 
 
-    /* ===== DETERMINANT ===== */
-
-
-
     try{
 
         let determinant = "";
-
-
-
-        /* ===== 1x1 ===== */
 
 
 
@@ -1817,10 +1839,6 @@ function showFinalMatrix(){
             determinant =
             matrix[0][0];
         }
-
-
-
-        /* ===== 2x2 ===== */
 
 
 
@@ -1847,10 +1865,6 @@ function showFinalMatrix(){
 
             ).toString();
         }
-
-
-
-        /* ===== 3x3 ===== */
 
 
 
